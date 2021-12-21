@@ -34,32 +34,32 @@ import javafx.stage.StageStyle;
  */
 public class GUI extends Application {
 
-    Gauge TempG = new Gauge();
-    Gauge HumidG = new Gauge();
-    VBox V = new VBox();
-    Label L;
-    HBox HGauge = new HBox();
-    HBox BButtons = new HBox();
-    Button Test = new Button("Test");
-    Button Stop = new Button("Stop");
-    Button Log = new Button("Log");
+    Gauge tempG = new Gauge();
+    Gauge humidG = new Gauge();
+    VBox vbox = new VBox();
+    Label label;
+    HBox hGauge = new HBox();
+    HBox bButtons = new HBox();
+    Button test = new Button("test");
+    Button stop = new Button("stop");
+    Button log = new Button("log");
 
     @Override
     public void init() {
-        L = new Label("FireAlarm Version 0.1");
-        setTempGauge(TempG);
-        setHumidGauge(HumidG);
-        HGauge = new HBox(200, TempG, HumidG);
-        HGauge.setAlignment(Pos.CENTER);
-        BButtons = new HBox(100, Test, Stop, Log);
-        BButtons.setAlignment(Pos.CENTER);
-        L.setTextFill(Color.WHITE);
-        L.setFont(Font.font(26));
-        V.getChildren().add(BButtons);
-        V.getChildren().add(L);
-        Test.setId("Test");
-        Stop.setId("Stop");
-        Log.setId("Log");
+        label = new Label("FireAlarm Version 0.1");
+        settempGauge(tempG);
+        sethumidGauge(humidG);
+        hGauge = new HBox(200, tempG, humidG);
+        hGauge.setAlignment(Pos.CENTER);
+        bButtons = new HBox(100, test, stop, log);
+        bButtons.setAlignment(Pos.CENTER);
+        label.setTextFill(Color.WHITE);
+        label.setFont(Font.font(26));
+        vbox.getChildren().add(bButtons);
+        vbox.getChildren().add(label);
+        test.setId("test");
+        stop.setId("stop");
+        log.setId("log");
     }
 
     @Override
@@ -68,49 +68,42 @@ public class GUI extends Application {
         StackPane root = new StackPane();
 
         /*Set Scaling for The Buttons*/
-        Test.setScaleX(1.5);
-        Stop.setScaleX(1.5);
-        Log.setScaleX(1.5);
+        test.setScaleX(1.5);
+        stop.setScaleX(1.5);
+        log.setScaleX(1.5);
 
         /*Chnging Color of the Buttons*/
-        //Test.setStyle("-fx-background-color:grey; -fx-border-color: black;");
-        Test.setTextFill(Color.WHITE);
+        //test.setStyle("-fx-background-color:grey; -fx-border-color: black;");
+        test.setTextFill(Color.WHITE);
 
-        //Stop.setStyle("-fx-background-color:grey; -fx-border-color: black;");
-        Stop.setTextFill(Color.WHITE);
+        //stop.setStyle("-fx-background-color:grey; -fx-border-color: black;");
+        stop.setTextFill(Color.WHITE);
 
-        //Log.setStyle("-fx-background-color:grey; -fx-border-color: black;");
-        Log.setTextFill(Color.WHITE);
+        //log.setStyle("-fx-background-color:grey; -fx-border-color: black;");
+        log.setTextFill(Color.WHITE);
 
-        /*Pressing Escape will affect The Stop Button*/
-        Stop.setCancelButton(true);
+        /*Pressing Escape will affect The stop Button*/
+        stop.setCancelButton(true);
 
-        /*Pressing Enter Will affect the Test Button*/
-        Test.setDefaultButton(true);
+        /*Pressing Enter Will affect the test Button*/
+        test.setDefaultButton(true);
 
         BorderPane Pane = new BorderPane();
-        Image image = new Image(new FileInputStream("C:\\Users\\Mostafa\\OneDrive\\Desktop\\Java\\GUI\\src\\gui\\1.jpg"));
+        Image image = new Image(new FileInputStream("C:\\Users\\abdelrahman\\Documents\\NetBeansProjects\\proGit\\1.jpg"));
         ImageView imageView = new ImageView(image);
         Group root2 = new Group(imageView);
 
         imageView.setFitHeight(1000);
         imageView.setFitWidth(1500);
-        Test.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-
-                System.out.print("Testing");
-            }
+        test.setOnAction(e -> {
+            System.out.print("testing");
         });
-        Stop.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-
-                System.out.print("Stop");
-            }
+        stop.setOnAction(e -> {
+            System.out.print("stop");
         });
-        Pane.setBottom(V);
-        Pane.setCenter(HGauge);
+        
+        Pane.setBottom(vbox);
+        Pane.setCenter(hGauge);
         root.getChildren().add(root2);
         root.getChildren().add(Pane);
 
@@ -131,7 +124,7 @@ public class GUI extends Application {
          */
     }
 
-    public void setTempGauge(Gauge gauge) {
+    public void settempGauge(Gauge gauge) {
         gauge.setSkin(new FlatSkin(gauge));
         gauge.setDecimals(0);
         gauge.setValueColor(Color.WHITE);
@@ -147,7 +140,7 @@ public class GUI extends Application {
         gauge.setValue(0);
     }
 
-    public void setHumidGauge(Gauge gauge) {
+    public void sethumidGauge(Gauge gauge) {
         gauge.setSkin(new FlatSkin(gauge));
         gauge.setDecimals(0);
         gauge.setValueColor(Color.WHITE);
