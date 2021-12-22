@@ -89,7 +89,7 @@ public class GUI extends Application {
         test.setDefaultButton(true);
 
         BorderPane Pane = new BorderPane();
-        Image image = new Image(new FileInputStream("C:\\Users\\abdelrahman\\Documents\\NetBeansProjects\\proGit\\1.jpg"));
+        Image image = new Image(new FileInputStream("1.jpg"));
         ImageView imageView = new ImageView(image);
         Group root2 = new Group(imageView);
 
