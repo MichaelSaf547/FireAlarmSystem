@@ -9,9 +9,12 @@ import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.skins.FlatSkin;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Scanner;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.event.ActionEvent;
@@ -52,8 +55,9 @@ public class GUI extends Application {
     PrintWriter output;
     Scanner input;
     int temper;
+    int humid;
             
-	////Start communication between Ardunio and Java using SerialPort		
+    //Start communication between Ardunio and Java using SerialPort		
     public String init_com()
     {
         Vector<String> portList = new Vector<String>();
@@ -73,7 +77,7 @@ public class GUI extends Application {
         return comPort;
     }
     
-	//Send to Ardunio using SerialPort
+    //Send to Ardunio using SerialPort
     public void send(String msg)
     {
         
@@ -81,16 +85,14 @@ public class GUI extends Application {
         thread = new Thread(){
             @Override public void run() {
                 try {Thread.sleep(100); } catch(Exception e) {}
-                
-                output.println("1");
+                output.println(msg);
                 output.flush();
             }
-            
         };
         thread.start();
     }
     
-	//Recieve from Ardunio using SerialPort
+    //Recieve from Ardunio using SerialPort
     public void recieve()
     {
         Thread thread;
@@ -100,17 +102,15 @@ public class GUI extends Application {
                 
                 while(input.hasNextLine()) {
                     try{
+                        humid=Integer.parseInt(input.nextLine());
                         temper = Integer.parseInt(input.nextLine());
-                        System.out.println(temper);
+                        System.out.println(temper+" "+humid);
                     }
-                    catch(Exception e){}
-                    
+                    catch(Exception e){} 
                 }
-            }
-            
+            } 
         };
-	thread.start();
-            
+	thread.start(); 
     }
     
     @Override
@@ -127,12 +127,9 @@ public class GUI extends Application {
         label.setFont(Font.font(26));
         vbox.getChildren().add(bButtons);
         vbox.getChildren().add(label);
-        
         test.setId("test");
         stop.setId("stop");
-        log.setId("log");
-       
-        //vbox.getChildren().add(com_label);
+        log.setId("log");   
     }
 
     @Override
@@ -172,8 +169,17 @@ public class GUI extends Application {
             send("1");
         });
         stop.setOnAction(e -> {
-            recieve();
+            send("2");
         });
+        
+        recieve();
+        new Thread(() -> {
+            while(true)
+            {
+                tempG.setValue(temper);
+                humidG.setValue(humid);
+            }
+        }).start();
        
         
         Pane.setBottom(vbox);
