@@ -50,7 +50,7 @@ public class GUI extends Application {
     public String init_com()
     {
         Vector<String> portList = new Vector<String>();
-	SerialPort[] portNames = SerialPort.getCommPorts();
+		SerialPort[] portNames = SerialPort.getCommPorts();
         String comPort="";
         for(int i = 0; i < portNames.length; i++)
         {
