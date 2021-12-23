@@ -9,6 +9,8 @@ import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.skins.FlatSkin;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 import java.util.Vector;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -47,10 +49,15 @@ public class GUI extends Application {
     Button stop = new Button("stop");
     Button log = new Button("log");
     static SerialPort chosenPort;
+    PrintWriter output;
+    Scanner input;
+    int temper;
+            
+	////Start communication between Ardunio and Java using SerialPort		
     public String init_com()
     {
         Vector<String> portList = new Vector<String>();
-		SerialPort[] portNames = SerialPort.getCommPorts();
+        SerialPort[] portNames = SerialPort.getCommPorts();
         String comPort="";
         for(int i = 0; i < portNames.length; i++)
         {
@@ -60,8 +67,52 @@ public class GUI extends Application {
         }
         chosenPort = SerialPort.getCommPort(comPort);
         chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
+        output = new PrintWriter(chosenPort.getOutputStream());
+        input = new Scanner(chosenPort.getInputStream());
+        chosenPort.openPort();
         return comPort;
     }
+    
+	//Send to Ardunio using SerialPort
+    public void send(String msg)
+    {
+        
+        Thread thread;
+        thread = new Thread(){
+            @Override public void run() {
+                try {Thread.sleep(100); } catch(Exception e) {}
+                
+                output.println("1");
+                output.flush();
+            }
+            
+        };
+        thread.start();
+    }
+    
+	//Recieve from Ardunio using SerialPort
+    public void recieve()
+    {
+        Thread thread;
+        thread = new Thread(){
+            @Override public void run() {
+                try {Thread.sleep(100); } catch(Exception e) {}
+                
+                while(input.hasNextLine()) {
+                    try{
+                        temper = Integer.parseInt(input.nextLine());
+                        System.out.println(temper);
+                    }
+                    catch(Exception e){}
+                    
+                }
+            }
+            
+        };
+	thread.start();
+            
+    }
+    
     @Override
     public void init() {
         //label = new Label("FireAlarm Version 0.1");
@@ -118,11 +169,12 @@ public class GUI extends Application {
         imageView.setFitHeight(1000);
         imageView.setFitWidth(1500);
         test.setOnAction(e -> {
-            System.out.print("testing");
+            send("1");
         });
         stop.setOnAction(e -> {
-            System.out.print("stop");
+            recieve();
         });
+       
         
         Pane.setBottom(vbox);
         Pane.setCenter(hGauge);
