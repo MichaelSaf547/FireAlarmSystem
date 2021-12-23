@@ -8,8 +8,9 @@
   </information>
   <resources>
     <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="GUI.jar" size="1403950" download="eager" />
+    <jar href="GUI.jar" size="1404548" download="eager" />
     <jar href="lib\Medusa-8.0.jar" size="1463851" download="eager" />
+    <jar href="lib\jSerialComm-2.7.0.jar" size="489794" download="eager" />
   </resources>
   <jfx:javafx-desc  width="800" height="600" main-class="gui.GUI"  name="GUI" />
   <update check="always"/>

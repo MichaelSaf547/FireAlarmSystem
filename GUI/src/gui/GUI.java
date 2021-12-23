@@ -4,10 +4,12 @@
  */
 package gui;
 
+import com.fazecast.jSerialComm.SerialPort;
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.skins.FlatSkin;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.Vector;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.event.ActionEvent;
@@ -38,15 +40,32 @@ public class GUI extends Application {
     Gauge humidG = new Gauge();
     VBox vbox = new VBox();
     Label label;
+    Label com_label;
     HBox hGauge = new HBox();
     HBox bButtons = new HBox();
     Button test = new Button("test");
     Button stop = new Button("stop");
     Button log = new Button("log");
-
+    static SerialPort chosenPort;
+    public String init_com()
+    {
+        Vector<String> portList = new Vector<String>();
+	SerialPort[] portNames = SerialPort.getCommPorts();
+        String comPort="";
+        for(int i = 0; i < portNames.length; i++)
+        {
+            portList.add(portNames[i].getSystemPortName());
+            System.out.println(i+"- "+portNames[i].getSystemPortName());
+            comPort=portNames[i].getSystemPortName();
+        }
+        chosenPort = SerialPort.getCommPort(comPort);
+        chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
+        return comPort;
+    }
     @Override
     public void init() {
-        label = new Label("FireAlarm Version 0.1");
+        //label = new Label("FireAlarm Version 0.1");
+        label=new Label(" Ardunio Uno("+init_com()+")");
         settempGauge(tempG);
         sethumidGauge(humidG);
         hGauge = new HBox(200, tempG, humidG);
@@ -57,9 +76,12 @@ public class GUI extends Application {
         label.setFont(Font.font(26));
         vbox.getChildren().add(bButtons);
         vbox.getChildren().add(label);
+        
         test.setId("test");
         stop.setId("stop");
         log.setId("log");
+       
+        //vbox.getChildren().add(com_label);
     }
 
     @Override
