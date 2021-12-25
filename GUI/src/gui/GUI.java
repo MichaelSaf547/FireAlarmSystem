@@ -13,17 +13,21 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Time;
 import java.time.LocalTime;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
@@ -50,12 +54,14 @@ public class GUI extends Application {
     Label com_label;
     HBox hGauge = new HBox();
     HBox bButtons = new HBox();
-    Button test = new Button("test");
-    Button stop = new Button("stop");
-    Button log = new Button("log");
+    Button test = new Button("Test");
+    Button stop = new Button("Stop");
+    Button log = new Button("Log");
+    Button start = new Button("Start");
     static SerialPort chosenPort;
     PrintWriter output;
     Scanner input;
+    int alertFlag = 0;
     int temper;
     int humid;
     Scene scene;
@@ -166,7 +172,7 @@ public class GUI extends Application {
         sethumidGauge(humidG);
         hGauge = new HBox(200, tempG, humidG);
         hGauge.setAlignment(Pos.CENTER);
-        bButtons = new HBox(100, test, stop, log);
+        bButtons = new HBox(100, start, test, stop, log);
         bButtons.setAlignment(Pos.CENTER);
         label.setTextFill(Color.WHITE);
         label.setFont(Font.font(26));
@@ -175,6 +181,7 @@ public class GUI extends Application {
         test.setId("test");
         stop.setId("stop");
         log.setId("log");
+        start.setId("start");
 
         Font font = Font.font("Verdana", FontWeight.BOLD, 18);
 
@@ -228,13 +235,14 @@ public class GUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
-
+        alertMethod();
         StackPane root = new StackPane();
 
         /* Set Scaling for The Buttons */
-        test.setScaleX(1.5);
-        stop.setScaleX(1.5);
-        log.setScaleX(1.5);
+        test.setScaleX(1.25);
+        stop.setScaleX(1.25);
+        log.setScaleX(1.25);
+        start.setScaleX(1.25);
 
         /* Chnging Color of the Buttons */
         // test.setStyle("-fx-background-color:grey; -fx-border-color: black;");
@@ -259,11 +267,18 @@ public class GUI extends Application {
 
         imageView.setFitHeight(1000);
         imageView.setFitWidth(1500);
+
         test.setOnAction(e -> {
             send("1");
         });
+
         stop.setOnAction(e -> {
             send("2");
+        });
+
+        start.setOnAction(e -> {
+            send("3");
+            alertMethod();
         });
 
         log.setOnAction(e -> {
@@ -274,13 +289,17 @@ public class GUI extends Application {
         log_Ok.setOnAction(e -> {
             primaryStage.setScene(scene);
         });
+
         recieve();
+
         new Thread(() -> {
             while (true) {
                 tempG.setValue(temper);
                 humidG.setValue(humid);
             }
         }).start();
+
+        
 
         Pane.setBottom(vbox);
         Pane.setCenter(hGauge);
@@ -335,6 +354,28 @@ public class GUI extends Application {
         gauge.setUnit("%rh");
         // gauge.setBarColor(Color.BLUE);
         gauge.setValue(0);
+    }
+
+    public void alertMethod() {
+        new Thread(() -> {
+            while (alertFlag == 0) {
+                System.out.println("---------");
+                if (temper >= 26) {
+                    alertFlag = 1;
+                }
+            }
+            if (alertFlag == 1) {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        Alert alert = new Alert(AlertType.WARNING);
+                        alert.setTitle("Temprature Warning !");
+                        alert.setContentText("Temprature is above 26 °C");
+                        alert.show();
+                    }
+                });
+            }
+        }).start();
     }
 
     // public void CurrentTem
