@@ -135,8 +135,8 @@ public class GUI extends Application {
 
                 while (input.hasNextLine()) {
                     try {
-                        humid = Integer.parseInt(input.nextLine());
                         temper = Integer.parseInt(input.nextLine());
+                        humid = Integer.parseInt(input.nextLine());
                         counter_Read++;
                         if (counter_Read == 1) {
                             data_T.add(temper);
@@ -167,7 +167,7 @@ public class GUI extends Application {
     @Override
     public void init() {
         // label = new Label("FireAlarm Version 0.1");
-        label = new Label(" Ardunio Uno(" + init_com() + ")");
+        label = new Label(" Ardunio Nano(" + init_com() + ")");
         settempGauge(tempG);
         sethumidGauge(humidG);
         hGauge = new HBox(200, tempG, humidG);
@@ -235,9 +235,9 @@ public class GUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
-        alertMethod();
         StackPane root = new StackPane();
-
+        alertMethod();
+        
         /* Set Scaling for The Buttons */
         test.setScaleX(1.25);
         stop.setScaleX(1.25);
@@ -370,10 +370,11 @@ public class GUI extends Application {
                     public void run() {
                         Alert alert = new Alert(AlertType.WARNING);
                         alert.setTitle("Temprature Warning !");
-                        alert.setContentText("Temprature is above 26 °C");
+                        alert.setContentText("Temprature is above or equal 26 °C");
                         alert.show();
                     }
                 });
+                alertFlag =0;
             }
         }).start();
     }
