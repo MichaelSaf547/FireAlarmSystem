@@ -8,14 +8,21 @@
  *              4-Mostafa Hani Imam
  *              5-mohamed maged abdrabuh 
  */
-
 package gui;
 
 import com.fazecast.jSerialComm.SerialPort;
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.skins.FlatSkin;
+import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.Socket;
+import java.time.LocalTime;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -42,24 +49,24 @@ public class GUI extends Application {
 
     // The whole comming are for the application Scene
     Scene app_Scene;                        // Application Scene
-    Gauge tempG = new Gauge();              // Gauge for Temperature
-    Gauge humidG = new Gauge();             // Gauge for Humidity
-    VBox vbox = new VBox();                 // To handle the Application Scene
+    Gauge tempG;             // Gauge for Temperature
+    Gauge humidG;            // Gauge for Humidity
+    VBox vbox;                 // To handle the Application Scene
     Label label;                            // Label for the name of the Arduino name and port                      
-    HBox hGauge = new HBox();               // For Humidity Gauge 
-    HBox bButtons = new HBox();             // For the four buttons in the Application Scene
-    
+    HBox hGauge;               // For Humidity Gauge 
+    HBox bButtons;             // For the four buttons in the Application Scene
+
     //The four buttons in the Applicatioin Scene
-    Button test = new Button("Test");       // To test the whole System     
-    Button stop = new Button("Stop");       // To stop the led and buzzer after a high temperature is detected 
-    Button log = new Button("Log");         // To open the Log Scene and see the Log data
-    Button start = new Button("Start");     // To start the system again after the stop is pressed 
-    
+    Button test;       // To test the whole System     
+    Button stop;       // To stop the led and buzzer after a high temperature is detected 
+    Button log;         // To open the Log Scene and see the Log data
+    Button start;     // To start the system again after the stop is pressed 
+
     // Used serial port connection
     static SerialPort chosenPort;
-    
+
     int alertFlag = 0;                      // Used as a flag to check if the temperature is higher than 26 C
-    
+
     // The Whole comming is for the Log Scene
     Scene log_Scene;
 
@@ -73,18 +80,65 @@ public class GUI extends Application {
     TextArea log_AreaT;                     // For Temperature data
     TextArea log_AreaH;                     // For Humidity data
     TextArea log_AreaTD;                    // For Time data
-    
+
     Group root2;                            // To handle the background image
-    Comm comm;                              // Comm object to start connection
-    
+    //Comm comm;                              // Comm object to start connection
+    Socket s;
+    DataInputStream dis;
+    PrintStream ps;
+    Integer temper = 0;
+    Integer humid = 0;
+
+    private int counter_Read = 0; // every 15 input will log one data
+    private int counter_Log = 0; // to check how many data has benn logged
+
+    private LocalTime currentTime;
+
+    public Vector<Integer> data_H;
+    public Vector<Integer> data_T;
+    public Vector<String> time;
 
     @Override
     public void init() {
-        
-        comm = new Comm();  // Start the communication
-        
-        label = new Label(" Ardunio Nano(" + comm.comPort + ")");       //Arduino name and connection port
-        
+
+        /*creat socket for this client to start the conction to the server */
+        try {
+            s = new Socket("127.0.0.1", 5005);
+            dis = new DataInputStream(s.getInputStream());
+            ps = new PrintStream(s.getOutputStream());
+        } catch (IOException ex) {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+            ps.close();
+            try {
+                dis.close();
+                s.close();
+            } catch (IOException ex1) {
+                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex1);
+            }
+        }
+
+        /*get the name of the port that the aruino is connect to*/
+        String com = "";
+        try {
+            com = dis.readLine();
+        } catch (IOException ex) {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        label = new Label(" Ardunio Nano(" + com + ")");       //Arduino name and connection port
+        tempG = new Gauge();              // Gauge for Temperature
+        humidG = new Gauge();
+        vbox = new VBox();
+        hGauge = new HBox();
+        bButtons = new HBox();
+        test = new Button("Test");
+        stop = new Button("Stop");
+        log = new Button("Log");
+        start = new Button("Start");
+
+        data_H = new Vector<>();
+        data_T = new Vector<>();
+        time = new Vector<>();
+
         settempGauge(tempG);                                            // Set Temperature Gauge
         sethumidGauge(humidG);                                          // Set Humidity Gauge
         hGauge = new HBox(200, tempG, humidG);                          // Add gauges to Hbox
@@ -100,7 +154,6 @@ public class GUI extends Application {
         log.setId("log");                                               // Setid for the CSS file
         start.setId("start");                                           // Setid for the CSS file
 
-        
         //The whole comming are for the log
         Font font = Font.font("Verdana", FontWeight.BOLD, 18);
 
@@ -110,11 +163,11 @@ public class GUI extends Application {
         log_Label_DataH.setFont(font);
         log_Label_Time = new Label("           Time");
         log_Label_Time.setFont(font);
-        log_Ok = new Button("Ok");              
+        log_Ok = new Button("Ok");
         log_HBox = new HBox(log_Label_Time, log_Label_DataT, log_Label_DataH); // add labels
 
-        log_VBox = new VBox();                
-        
+        log_VBox = new VBox();
+
         // Adjust Text area for Temperature 
         log_AreaT = new TextArea();
         log_AreaT.setPrefHeight(400);
@@ -147,17 +200,60 @@ public class GUI extends Application {
         log_AreaT.clear();
         log_AreaH.clear();
         log_AreaTD.clear();
-        for (i = 0; i < comm.get_Counter_Log(); i++) {
-            log_AreaTD.appendText(comm.time.get(i) + "\n");
-            log_AreaT.appendText(comm.data_T.get(i) + "\n");
-            log_AreaH.appendText(comm.data_H.get(i) + "\n");
+        for (i = 0; i < counter_Log; i++) {
+            log_AreaTD.appendText(time.get(i) + "\n");
+            log_AreaT.appendText(data_T.get(i) + "\n");
+            log_AreaH.appendText(data_H.get(i) + "\n");
         }
+    }
+
+    public void recieveFromServer() {
+        /*Creating thread to receive the temperature and humidty readings form the server*/
+        new Thread(() -> {
+            while (true) {
+                String str;
+                try {
+                    /*the first line is the temp reading */
+                    str = dis.readLine();
+                    /*assign value into the integer temper */
+                    temper = new Integer(str);
+                    /*the scound line is the humidty reading*/
+                    str = dis.readLine();
+                    /*assign value into the integer humid*/
+                    humid = new Integer(str);
+                    /*set the value of the Gauge*/
+                    tempG.setValue(temper);
+                    humidG.setValue(humid);
+                    /*assign the values into the vector */
+                    counter_Read++;
+                    if (counter_Read == 1) {
+                        data_T.add(temper);
+                        data_H.add(humid);
+                        currentTime = LocalTime.now();
+                        time.add(currentTime.getHour() + ":" + currentTime.getMinute() + ":"
+                                + currentTime.getSecond());
+                        counter_Log++;
+                    } else if (counter_Read == 15) {
+                        counter_Read = 0;
+                    }
+                    if (counter_Log == 10) {
+                        data_T.remove(0);
+                        data_H.remove(0);
+                        time.remove(0);
+
+                        counter_Log--;
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }).start();
     }
 
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
         StackPane root = new StackPane();
-        
+
         /* Set Scaling for The Buttons */
         test.setScaleX(1.25);
         stop.setScaleX(1.25);
@@ -186,23 +282,23 @@ public class GUI extends Application {
         Image image = new Image(new FileInputStream("1.jpg"));
         ImageView imageView = new ImageView(image);
         root2 = new Group(imageView);
-        
+
         imageView.setFitHeight(1000);
         imageView.setFitWidth(1500);
 
         // The handling of Test key: just send "1" to Arduino to make it start led and buzzer
         test.setOnAction(e -> {
-            comm.send("1");
+            ps.println("1");
         });
 
         // The handling of Stop key: just send "2" to Arduino to make it stop led and buzzer
         stop.setOnAction(e -> {
-            comm.send("2");
+            ps.println("2");
         });
 
         // The handling of Start key: just send "3" to Arduino to make it start its funtion again
         start.setOnAction(e -> {
-            comm.send("3");
+            ps.println("3");
             alertMethod();
         });
 
@@ -212,24 +308,14 @@ public class GUI extends Application {
             primaryStage.setScene(log_Scene);
             print_Log_Data();
         });
-
         // The handling of Log key: Change the Scene from Log to Applocation
         log_Ok.setOnAction(e -> {
             primaryStage.setScene(app_Scene);
         });
-
-        comm.recieve();             // Start recieving from Arduino Thread
-
-        alertMethod();              // Start the alert Thread 
-        
-        // Start a Thread to update the Gauges values
-        new Thread(() -> {
-            while (true) {
-                tempG.setValue(comm.temper);
-                humidG.setValue(comm.humid);
-            }
-        }).start();
-
+        /*call the recieve method that recieve the readings form the server*/
+        recieveFromServer();
+        /*call the alert Method after recieving the reading from the server */
+        alertMethod();
 
         Pane.setBottom(vbox);
         Pane.setCenter(hGauge);
@@ -244,8 +330,9 @@ public class GUI extends Application {
         primaryStage.setTitle("FireAlarm");
         primaryStage.setScene(app_Scene);
         primaryStage.show();
-        
+
     }
+
     // Set the Temperature gauge data
     public void settempGauge(Gauge gauge) {
         gauge.setSkin(new FlatSkin(gauge));
@@ -262,6 +349,7 @@ public class GUI extends Application {
         gauge.setUnit("°C");
         gauge.setValue(0);
     }
+
     // Set the Humidity gauge data
     public void sethumidGauge(Gauge gauge) {
         gauge.setSkin(new FlatSkin(gauge));
@@ -284,8 +372,14 @@ public class GUI extends Application {
     public void alertMethod() {
         new Thread(() -> {
             while (alertFlag == 0) {
-                
-                if (comm.temper >= 26) {
+
+                //System.out.println("----------"+temper);
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
+                if (temper >= 26) {
+
                     alertFlag = 1;
                 }
             }
@@ -296,7 +390,7 @@ public class GUI extends Application {
                     alert.setContentText("Temprature is above or equal 26 °C");
                     alert.show();
                 });
-                alertFlag =0;
+                alertFlag = 0;
             }
         }).start();
     }
