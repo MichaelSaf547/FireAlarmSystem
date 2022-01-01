@@ -6,7 +6,7 @@
  *              2-Abdelrahman Mahmoud Mohamed Saleh
  *              3-Abdelrahman Omar Mohamed Shafik
  *              4-Mostafa Hani Imam
- *              5-mohamed maged abdrabuh 
+ *              5-Mohamed Maged Abdrabuh 
  */
 package server;
 
@@ -20,12 +20,12 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class CleintsHandler extends Thread {
 
     DataInputStream dis;
     PrintStream ps;
     static Vector<CleintsHandler> clients = new Vector<CleintsHandler>();
+
     /*start the to way communication between the clients with the server and the server with the Arduino*/
     public CleintsHandler(Socket s) {
         try {
@@ -82,6 +82,7 @@ public class CleintsHandler extends Thread {
         };
         thread.start();
     }
+
     /*this thread is to recieve the ordars from the clients and sent to the Arduino*/
     @Override
     public void run() {

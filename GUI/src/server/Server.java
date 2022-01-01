@@ -2,11 +2,12 @@
  * ITI INTAKE 42 EMBEDDED SYSTEM 
  * JAVA COURSE 
  * GROUP 8
- * STUDENTS ARE 1-Michael Safwat Sobhy Nakhla --> "LEADER"
+ * STUDENTS Names:
+                1-Michael Safwat Sobhy Nakhla --> "LEADER"
  *              2-Abdelrahman Mahmoud Mohamed Saleh
  *              3-Abdelrahman Omar Mohamed Shafik
  *              4-Mostafa Hani Imam
- *              5-mohamed maged abdrabuh 
+ *              5-Mohamed Maged Abdrabuh 
  */
 package server;
 
@@ -24,7 +25,7 @@ import javafx.scene.Scene;
 /*
 *1-This class represent the server that recives reading sensor from the Arduino and bradcasting it to all clients
 *2-recievs ordars from the clients and sends it to the Arduino
-*/
+ */
 public class Server {
 
     ServerSocket server;
@@ -38,6 +39,7 @@ public class Server {
     static String com;
     Scene scene;
     Scene log_Scene;
+
     /*Start communication between Ardunio and the server using SerialPort*/
     static public String init_com() {
         Vector<String> portList = new Vector<String>();
@@ -70,7 +72,16 @@ public class Server {
                 while (input.hasNextLine()) {
                     try {
                         temper = Integer.parseInt(input.nextLine());
-                        humid = Integer.parseInt(input.nextLine());
+
+                        if (temper > 50) 
+                        {
+                            humid = temper;
+                            temper = Integer.parseInt(input.nextLine());
+                        }
+                        else 
+                        {
+                            humid = Integer.parseInt(input.nextLine());
+                        }
                         System.out.println(temper + " " + humid);
                     } catch (Exception e) {
                     }
@@ -79,6 +90,7 @@ public class Server {
         };
         thread.start();
     }
+
     /*start the server*/
     public Server() {
         try {
@@ -87,7 +99,7 @@ public class Server {
             while (true) {
                 /*waiting for clients to join the server*/
                 s = server.accept();
-                /*add new client to the class CleintsHandler*/    
+                /*add new client to the class CleintsHandler*/
                 new CleintsHandler(s);
             }
         } catch (IOException ex) {
@@ -97,7 +109,7 @@ public class Server {
 
     public static void main(String[] args) {
         /*call the init_com to start the connection betwen the server and the Arduino*/
-        com=init_com();
+        com = init_com();
         /*call the recieve_com to recieve the reading from the the server*/
         recieve_com();
         /*call the constuctor of the server*/

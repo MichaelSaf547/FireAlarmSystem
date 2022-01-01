@@ -6,7 +6,7 @@
  *              2-Abdelrahman Mahmoud Mohamed Saleh
  *              3-Abdelrahman Omar Mohamed Shafik
  *              4-Mostafa Hani Imam
- *              5-mohamed maged abdrabuh 
+ *              5-Mohamed Maged Abdrabuh 
  */
 
 package gui;
