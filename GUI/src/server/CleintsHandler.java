@@ -19,12 +19,16 @@ import java.net.Socket;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
+import static server.Server.chosenPort;
 
 public class CleintsHandler extends Thread {
 
     DataInputStream dis;
     PrintStream ps;
     static Vector<CleintsHandler> clients = new Vector<>();
+    int counter_to_exit=0;
+
 
     /*start the to way communication between the clients with the server and the server with the Arduino*/
     public CleintsHandler(Socket s) {
@@ -32,12 +36,12 @@ public class CleintsHandler extends Thread {
             dis = new DataInputStream(s.getInputStream());
             ps = new PrintStream(s.getOutputStream());
             clients.add(this);
-            
+
             /*send the com port to the user*/
             ps.println(Server.com);
-            
+
             start();
-            
+
             /*this thread is to send the reading to all clients*/
             new Thread(() -> {
                 while (true) {
@@ -45,15 +49,31 @@ public class CleintsHandler extends Thread {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
                     }
-
                     for (CleintsHandler ch : clients) {
                         System.out.println("ClientHandeler" + Server.temper + " " + Server.humid);
-                        ch.ps.println(Server.temper);
-                        ch.ps.println(Server.humid);
+                        if (Server.chosenPort.openPort()) {
+                            ch.ps.println(Server.temper);
+                            ch.ps.println(Server.humid);
+                        } else {
+                            /*handeling if the arduino is not connected*/
+                            Server.open_Port = false;
+                            ch.ps.println(2);
+                            ch.ps.println(2);
+                           // System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                            for (counter_to_exit = 1; counter_to_exit < 6; counter_to_exit++) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException ex) {
+                                    Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                                //System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                            }
+                            Platform.exit();
+                            System.exit(0);
+                        }
                     }
                 }
             }).start();
-            
         } catch (IOException ex) {
             Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
             try {
@@ -93,7 +113,7 @@ public class CleintsHandler extends Thread {
             try {
                 /*recieve from the clients*/
                 String str = dis.readLine();
-                
+
                 /*send to the Arduino*/
                 send_com(str);
 

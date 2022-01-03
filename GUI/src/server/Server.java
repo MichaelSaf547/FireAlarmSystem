@@ -20,6 +20,7 @@ import java.util.Scanner;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 
 /*
@@ -39,22 +40,37 @@ public class Server {
     static String com;
     Scene scene;
     Scene log_Scene;
+    static Boolean open_Port = false;
+    static String comPort = "";
+    static int counter_to_exit;
+
 
     /*Start communication between Ardunio and the server using SerialPort*/
     static public String init_com() {
-        Vector<String> portList = new Vector<>();
-        SerialPort[] portNames = SerialPort.getCommPorts();
-        String comPort = "";
-        for (int i = 0; i < portNames.length; i++) {
-            portList.add(portNames[i].getSystemPortName());
-            System.out.println(i + "- " + portNames[i].getSystemPortName());
-            comPort = portNames[i].getSystemPortName();
+
+        while (open_Port == false) {
+            System.out.println("try to conncet to arduino");
+
+            Vector<String> portList = new Vector<>();
+            SerialPort[] portNames = SerialPort.getCommPorts();
+
+            for (int i = 0; i < portNames.length; i++) {
+                portList.add(portNames[i].getSystemPortName());
+                System.out.println(i + "- " + portNames[i].getSystemPortName());
+                comPort = portNames[i].getSystemPortName();
+            }
+            chosenPort = SerialPort.getCommPort(comPort);
+            chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
+            output = new PrintWriter(chosenPort.getOutputStream());
+            input = new Scanner(chosenPort.getInputStream());
+
+            open_Port = chosenPort.openPort();
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
         }
-        chosenPort = SerialPort.getCommPort(comPort);
-        chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
-        output = new PrintWriter(chosenPort.getOutputStream());
-        input = new Scanner(chosenPort.getInputStream());
-        chosenPort.openPort();
+
         return comPort;
     }
 
@@ -64,28 +80,90 @@ public class Server {
         thread = new Thread() {
             @Override
             public void run() {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
+                int temp_humd_flag = 0;
+                int count = 0, temp_temper = 0, temp_humid = 0;
+
+                while (count < 5) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+
+                    if (chosenPort.openPort()) {
+                        if (input.hasNextLine()) {
+                            String input1 = input.nextLine();
+
+                            String pattern = "-?\\d+";
+                            if (input1.matches("-?\\d+")) { // any positive or negetive integer or not!
+                                temp_temper = Integer.parseInt(input1);
+                            }
+
+                        }
+
+                        if (input.hasNextLine()) {
+                            try {
+                                temp_humid = Integer.parseInt(input.nextLine());
+                            } catch (NumberFormatException e) {
+
+                                // Print the message if exception occured
+                                System.out.println("NumberFormatException occured from arduino");
+                            }
+                        }
+                        count++;
+                        System.out.println(count + ":-" + temp_temper + " " + temp_humid);
+                    } else {
+                        System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                        for (counter_to_exit = 1; counter_to_exit < 6; counter_to_exit++) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException ex) {
+                                Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+
+                        }
+                        Platform.exit();
+                        System.exit(0);
+                    }
+                }
+
+                if (temp_temper > temp_humid) {
+                    temp_humd_flag = 1;
+                    System.out.println("-------temp_humd_flag = 1----------" + temp_temper + " " + temp_humid);
                 }
 
                 while (input.hasNextLine()) {
                     try {
-                        temper = Integer.parseInt(input.nextLine());
-
-                        if (temper > 50) 
-                        {
-                            humid = temper;
-                            temper = Integer.parseInt(input.nextLine());
-                        }
-                        else 
-                        {
-                            humid = Integer.parseInt(input.nextLine());
-                        }
-                        
-                        System.out.println(temper + " " + humid);
+                        Thread.sleep(100);
                     } catch (Exception e) {
                     }
+                    try {
+                        if (open_Port == true) {
+                            if (temp_humd_flag == 1) {
+                                humid = Integer.parseInt(input.nextLine());
+                                temper = Integer.parseInt(input.nextLine());
+                            } else {
+                                temper = Integer.parseInt(input.nextLine());
+                                humid = Integer.parseInt(input.nextLine());
+                            }
+                            System.out.println(temper + " " + humid + " " + chosenPort.openPort());
+                        } else {
+                            System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                            for (counter_to_exit = 1; counter_to_exit < 6; counter_to_exit++) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException ex) {
+                                    Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                                System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                            }
+                            Platform.exit();
+                            System.exit(0);
+                        }
+                        open_Port = chosenPort.openPort();
+                    } catch (Exception e) {
+                    }
+
                 }
             }
         };
@@ -104,9 +182,9 @@ public class Server {
                 new CleintsHandler(s);
             }
         } catch (IOException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Server.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
     }
-
 
 }

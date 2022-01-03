@@ -8,7 +8,7 @@
   </information>
   <resources>
     <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="GUI.jar" size="2607639" download="eager" />
+    <jar href="GUI.jar" size="2609640" download="eager" />
     <jar href="lib\Medusa-8.0.jar" size="1463851" download="eager" />
     <jar href="lib\jSerialComm-2.7.0.jar" size="489794" download="eager" />
   </resources>

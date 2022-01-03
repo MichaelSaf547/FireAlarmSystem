@@ -52,15 +52,15 @@ public class GUI extends Application {
     Gauge tempG;                // Gauge for Temperature
     Gauge humidG;               // Gauge for Humidity
     VBox vbox;                  // To handle the Application Scene
-    Label label;                // Label for the name of the Arduino name and port                      
+    Label label = new Label(" Ardunio Nano()"); // Label for the name of the Arduino name and port 
+    String com;
     HBox hGauge;                // For Humidity Gauge 
     HBox bButtons;              // For the four buttons in the Application Scene
 
     StackPane root;
-    StackPane root4;    
+    StackPane root4;
     StackPane root6;
 
-    
     //The four buttons in the Applicatioin Scene
     Button test;                // To test the whole System     
     Button stop;                // To stop the led and buzzer after a high temperature is detected 
@@ -89,6 +89,18 @@ public class GUI extends Application {
     private int counter_Log = 0; // to check how many data has benn logged
 
     private LocalTime currentTime;
+    int counter_to_exit;
+
+    public void get_com_port() {
+        /*get the name of the port that the aruino is connect to*/
+        com = "";
+        try {
+            com = dis.readLine();
+        } catch (IOException ex) {
+            System.out.println("Error reading Port name");
+        }
+        label.setText(" Ardunio Nano(" + com + ")");
+    }
 
     @Override
     public void init() throws FileNotFoundException {
@@ -99,31 +111,35 @@ public class GUI extends Application {
             dis = new DataInputStream(s.getInputStream());
             ps = new PrintStream(s.getOutputStream());
         } catch (IOException ex) {
-            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
-            ps.close();
             try {
-                dis.close();
-                s.close();
-            } catch (IOException ex1) {
-                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex1);
+                for (counter_to_exit = 0; counter_to_exit < 6; counter_to_exit++) {
+                    Thread.sleep(1000);
+                    Platform.runLater(() -> {
+                        System.out.println("The server is dowen for " + counter_to_exit + " sec");
+                    });
+                }
+            } catch (Exception e) {
             }
+            Platform.exit();
+            System.exit(0);
         }
 
-        /*get the name of the port that the aruino is connect to*/
-        String com = "";
+        root = new StackPane();
+        root4 = new StackPane();
+        root6 = new StackPane();
+        /* String com = "";
         try {
             com = dis.readLine();
         } catch (IOException ex) {
             System.out.println("Error reading Port name");
         }
-        
-        
-        root = new StackPane();
-        root4 = new StackPane();
-        root6 = new StackPane();
+       
 
-        
-        label = new Label(" Ardunio Nano(" + com + ")");       //Arduino name and connection port
+        label = new Label(" Ardunio Nano(" + com + ")");*/
+
+ /*get the name com port*/
+        get_com_port();
+
         tempG = new Gauge();              // Gauge for Temperature
         humidG = new Gauge();
         vbox = new VBox();
@@ -152,14 +168,12 @@ public class GUI extends Application {
         start.setId("start");                                           // Setid for the CSS file
         exit.setId("exit");
 
-        
         //The whole comming are for the log
         log_Object = new Log();
         log_Setting = new Log_Setting();
     }
-    
-    public void add_To_Log()
-    {
+
+    public void add_To_Log() {
         /*assign the values into the vector */
         counter_Read++;
         if (counter_Read == 1) {
@@ -169,7 +183,7 @@ public class GUI extends Application {
             log_Object.time.add(currentTime.getHour() + ":" + currentTime.getMinute() + ":"
                     + currentTime.getSecond());
             counter_Log++;
-            
+
         } else if (counter_Read >= log_Object.TIME_BET_READ * 2) {
             counter_Read = 0;
         }
@@ -190,34 +204,62 @@ public class GUI extends Application {
                 try {
                     /*the first line is the temp reading */
                     str = dis.readLine();
-                   
+
                     /*assign value into the integer temper */
                     temper = new Integer(str);
-                    
+
                     /*the scound line is the humidty reading*/
                     str = dis.readLine();
-                    
-                    
+
                     /*assign value into the integer humid*/
                     humid = new Integer(str);
-                    
+
                     /*set the value of the Gauge*/
                     tempG.setValue(temper);
                     humidG.setValue(humid);
-                    
+                    counter_to_exit = 0;
+                    if (temper == 2 && humid == 2) {
+                        try {
+                            for (counter_to_exit = 0; counter_to_exit < 6; counter_to_exit++) {
+                                Thread.sleep(1000);
+                                Platform.runLater(() -> {
+                                    label.setText("disconected from the Arduino for " + counter_to_exit + " sec");
+                                });
+                            }
+                        } catch (Exception e) {
+                        }
+                        Platform.runLater(() -> {
+                            Platform.exit();
+                            System.exit(0);
+                        });
+                    }
+
                     add_To_Log();
-                    
+
                 } catch (IOException ex) {
-                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+                    /*handeling if server is dowen*/
+                    try {
+                        for (counter_to_exit = 0; counter_to_exit < 6; counter_to_exit++) {
+                            Thread.sleep(1000);
+                            Platform.runLater(() -> {
+                                label.setText("disconected from the server for " + counter_to_exit + " sec");
+                            });
+                        }
+                    } catch (Exception e) {
+                    }
+                    Platform.runLater(() -> {
+                        Platform.exit();
+                        System.exit(0);
+                    });
+
                 }
             }
         }).start();
     }
-    
-    
+
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
-        
+
 
         /* Set Scaling for The Buttons */
         test.setScaleX(1.25);
@@ -244,7 +286,6 @@ public class GUI extends Application {
         BorderPane Pane = new BorderPane();
 
         // Read an image to be used as a background for Applicarion Scene
-        
         Image image = new Image(new FileInputStream("1.jpg"));
         ImageView imageView = new ImageView(image);
         root2 = new Group(imageView);
@@ -287,45 +328,45 @@ public class GUI extends Application {
             primaryStage.centerOnScreen();
         });
         /* Handeling the stage close key on top right */
-        
+
         log_Object.log_Setting.setOnAction(e -> {
             primaryStage.setScene(log_Setting.log_Setting_Scene);
             primaryStage.centerOnScreen();
-            
+
         });
-        
+
         log_Setting.Done.setOnAction(e -> {
-            
-            log_Object.MAX_READ = Integer.parseInt(log_Setting.number.getText()); 
-            log_Object.TIME_BET_READ = Integer.parseInt(log_Setting.period.getText()); 
+
+            log_Object.MAX_READ = Integer.parseInt(log_Setting.number.getText());
+            log_Object.TIME_BET_READ = Integer.parseInt(log_Setting.period.getText());
             primaryStage.setScene(log_Object.log_Scene);
             primaryStage.centerOnScreen();
-            
+
         });
-        
+
         // force the field to be numeric only
         log_Setting.number.textProperty().addListener(new ChangeListener<String>() {
             @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, 
-                String newValue) {
+            public void changed(ObservableValue<? extends String> observable, String oldValue,
+                    String newValue) {
                 if (!newValue.matches("\\d*")) {
                     log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
                 }
             }
 
         });
-        
+
         log_Setting.period.textProperty().addListener(new ChangeListener<String>() {
             @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, 
-                String newValue) {
+            public void changed(ObservableValue<? extends String> observable, String oldValue,
+                    String newValue) {
                 if (!newValue.matches("\\d*")) {
                     log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
                 }
             }
 
         });
-        
+
         primaryStage.setOnCloseRequest((WindowEvent event) -> {
             Platform.exit();
             primaryStage.close();
@@ -345,20 +386,18 @@ public class GUI extends Application {
 
         root4.getChildren().add(log_Object.root3);
         root4.getChildren().add(log_Object.log_Pane);
-        
+
         root6.getChildren().add(log_Setting.root3);
         root6.getChildren().add(log_Setting.log_VBox);
-        
-        
+
         app_Scene = new Scene(root, 1500, 600, Color.WHITE);
         log_Object.log_Scene = new Scene(root4, 600, 600, Color.WHITE);
         app_Scene.getStylesheets().add(getClass().getResource("CSS.css").toString());
         log_Object.log_Scene.getStylesheets().add(getClass().getResource("CSS.css").toString());
-        
+
         log_Setting.log_Setting_Scene = new Scene(root6, 600, 400, Color.WHITE);
         log_Setting.log_Setting_Scene.getStylesheets().add(getClass().getResource("CSS.css").toString());
-        
-        
+
         primaryStage.initStyle(StageStyle.DECORATED);
         primaryStage.setTitle("FireAlarm");
         primaryStage.setScene(app_Scene);
