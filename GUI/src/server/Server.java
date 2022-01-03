@@ -42,7 +42,7 @@ public class Server {
 
     /*Start communication between Ardunio and the server using SerialPort*/
     static public String init_com() {
-        Vector<String> portList = new Vector<String>();
+        Vector<String> portList = new Vector<>();
         SerialPort[] portNames = SerialPort.getCommPorts();
         String comPort = "";
         for (int i = 0; i < portNames.length; i++) {
@@ -66,7 +66,7 @@ public class Server {
             public void run() {
                 try {
                     Thread.sleep(1000);
-                } catch (Exception e) {
+                } catch (InterruptedException e) {
                 }
 
                 while (input.hasNextLine()) {
@@ -82,6 +82,7 @@ public class Server {
                         {
                             humid = Integer.parseInt(input.nextLine());
                         }
+                        
                         System.out.println(temper + " " + humid);
                     } catch (Exception e) {
                     }
@@ -107,14 +108,5 @@ public class Server {
         }
     }
 
-    public static void main(String[] args) {
-        /*call the init_com to start the connection betwen the server and the Arduino*/
-        com = init_com();
-        /*call the recieve_com to recieve the reading from the the server*/
-        recieve_com();
-        /*call the constuctor of the server*/
-        Server server = new Server();
-
-    }
 
 }

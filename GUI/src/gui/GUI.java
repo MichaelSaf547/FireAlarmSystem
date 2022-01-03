@@ -20,12 +20,12 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.time.LocalTime;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -33,7 +33,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -42,7 +41,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
@@ -50,20 +48,27 @@ import javafx.stage.WindowEvent;
 public class GUI extends Application {
 
     // The whole comming are for the application Scene
-    Scene app_Scene;                        // Application Scene
-    Gauge tempG;             // Gauge for Temperature
-    Gauge humidG;            // Gauge for Humidity
-    VBox vbox;                 // To handle the Application Scene
-    Label label;                            // Label for the name of the Arduino name and port                      
-    HBox hGauge;               // For Humidity Gauge 
-    HBox bButtons;             // For the four buttons in the Application Scene
+    Scene app_Scene;            // Application Scene
+    Gauge tempG;                // Gauge for Temperature
+    Gauge humidG;               // Gauge for Humidity
+    VBox vbox;                  // To handle the Application Scene
+    Label label;                // Label for the name of the Arduino name and port                      
+    HBox hGauge;                // For Humidity Gauge 
+    HBox bButtons;              // For the four buttons in the Application Scene
 
+    StackPane root;
+    StackPane root4;    
+    StackPane root6;
+
+    
     //The four buttons in the Applicatioin Scene
-    Button test;       // To test the whole System     
-    Button stop;       // To stop the led and buzzer after a high temperature is detected 
-    Button log;         // To open the Log Scene and see the Log data
-    Button start;     // To start the system again after the stop is pressed
-    Button exit;        // To exit the system again after the exit is pressed
+    Button test;                // To test the whole System     
+    Button stop;                // To stop the led and buzzer after a high temperature is detected 
+    Button log;                 // To open the Log Scene and see the Log data
+    Button start;               // To start the system again after the stop is pressed
+    Button exit;                // To exit the system again after the exit is pressed
+
+    Group root2;                // To handle the background image
 
     // Used serial port connection
     static SerialPort chosenPort;
@@ -71,21 +76,8 @@ public class GUI extends Application {
     int alertFlag = 0;                      // Used as a flag to check if the temperature is higher than 26 C
 
     // The Whole comming is for the Log Scene
-    Scene log_Scene;
-
-    Label log_Label_DataT;                  // For Temperature data    
-    Label log_Label_DataH;                  // For Humidity data
-    Label log_Label_Time;                   // For Time data
-    Button log_Ok;                          // To return to the Application Scene
-    HBox log_HBox;                          // To handle the labels 
-    HBox log_Data_HBox;                     // To handle the Data Areas 
-    VBox log_VBox;                          // To handle the Log Scene
-    TextArea log_AreaT;                     // For Temperature data
-    TextArea log_AreaH;                     // For Humidity data
-    TextArea log_AreaTD;                    // For Time data
-
-    Group root2;                            // To handle the background image
-    Group root3;                            // To handle the background image of LOG    
+    Log log_Object;
+    Log_Setting log_Setting;
     //Comm comm;                            // Comm object to start connection
     Socket s;
     DataInputStream dis;
@@ -98,14 +90,8 @@ public class GUI extends Application {
 
     private LocalTime currentTime;
 
-    public Vector<Integer> data_H;
-    public Vector<Integer> data_T;
-    public Vector<String> time;
-
-    BorderPane log_Pane = new BorderPane();
-
     @Override
-    public void init() {
+    public void init() throws FileNotFoundException {
 
         /*creat socket for this client to start the conction to the server */
         try {
@@ -128,8 +114,15 @@ public class GUI extends Application {
         try {
             com = dis.readLine();
         } catch (IOException ex) {
-            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("Error reading Port name");
         }
+        
+        
+        root = new StackPane();
+        root4 = new StackPane();
+        root6 = new StackPane();
+
+        
         label = new Label(" Ardunio Nano(" + com + ")");       //Arduino name and connection port
         tempG = new Gauge();              // Gauge for Temperature
         humidG = new Gauge();
@@ -143,15 +136,11 @@ public class GUI extends Application {
         exit = new Button("Exit");
         exit.setCancelButton(true);
 
-        data_H = new Vector<>();
-        data_T = new Vector<>();
-        time = new Vector<>();
-
         settempGauge(tempG);                                            // Set Temperature Gauge
         sethumidGauge(humidG);                                          // Set Humidity Gauge
         hGauge = new HBox(200, tempG, humidG);                          // Add gauges to Hbox
         hGauge.setAlignment(Pos.CENTER);                                // Center the gauge
-        bButtons = new HBox(100, start, test, stop, log, exit);               // Add four buttons to Hbox
+        bButtons = new HBox(100, start, test, stop, log, exit);         // Add five buttons to Hbox
         bButtons.setAlignment(Pos.CENTER);                              // Center the buttons
         label.setTextFill(Color.WHITE);                                 // Make the text white 
         label.setFont(Font.font(26));                                   // Make the label font 26 
@@ -163,68 +152,33 @@ public class GUI extends Application {
         start.setId("start");                                           // Setid for the CSS file
         exit.setId("exit");
 
+        
         //The whole comming are for the log
-        Font font = Font.font("Verdana", FontWeight.BOLD, 18);
-        Label log_Label_OK_1 = new Label("");
-        Label log_Label_OK_2 = new Label("");
-        log_Label_DataT = new Label("Temperature");
-        log_Label_DataT.setFont(font);
-        log_Label_DataH = new Label("Humidity");
-        log_Label_DataH.setFont(font);
-        log_Label_Time = new Label("Time");
-        log_Label_Time.setFont(font);
-        log_Ok = new Button("Ok");
-        log_Ok.setDefaultButton(true);
-        log_Ok.setScaleX(1.25);
-        log_HBox = new HBox(log_Label_Time, log_Label_DataT, log_Label_DataH); // add labels
-        log_HBox.setAlignment(Pos.CENTER);
-        log_HBox.setSpacing(100);
-        log_VBox = new VBox();
-
-        // Adjust Text area for Temperature 
-        log_AreaT = new TextArea();
-        log_AreaT.setPrefHeight(400);
-        log_AreaT.setPrefWidth(300);
-        log_AreaT.setEditable(false);
-
-        // Adjust Text area for Humidity
-        log_AreaH = new TextArea();
-        log_AreaH.setPrefHeight(400);
-        log_AreaH.setPrefWidth(300);
-        log_AreaH.setEditable(false);
-
-        // Adjust Text area for Time 
-        log_AreaTD = new TextArea();
-        log_AreaTD.setPrefHeight(400);
-        log_AreaTD.setPrefWidth(300);
-        log_AreaTD.setEditable(false);
-
-        log_Data_HBox = new HBox();
-
-        log_VBox.getChildren().addAll(log_Label_OK_1, log_Ok, log_Label_OK_2);
-
-        log_Data_HBox.getChildren().addAll(log_AreaTD, log_AreaT, log_AreaH); // add areas
-        log_Data_HBox.setAlignment(Pos.CENTER);
-
-        //log_VBox.getChildren().addAll(log_HBox, log_Data_HBox, log_Ok); // add all parts in log Scene
-        HBox log_Ok_Hbx = new HBox();
-        log_Ok_Hbx.getChildren().add(log_VBox);
-        log_Ok_Hbx.setAlignment(Pos.CENTER);
-        log_Pane.setTop(log_HBox);
-        log_Pane.setCenter(log_Data_HBox);
-        log_Pane.setBottom(log_Ok_Hbx);
+        log_Object = new Log();
+        log_Setting = new Log_Setting();
     }
+    
+    public void add_To_Log()
+    {
+        /*assign the values into the vector */
+        counter_Read++;
+        if (counter_Read == 1) {
+            log_Object.data_T.add(temper);
+            log_Object.data_H.add(humid);
+            currentTime = LocalTime.now();
+            log_Object.time.add(currentTime.getHour() + ":" + currentTime.getMinute() + ":"
+                    + currentTime.getSecond());
+            counter_Log++;
+            
+        } else if (counter_Read >= log_Object.TIME_BET_READ * 2) {
+            counter_Read = 0;
+        }
+        while (counter_Log > log_Object.MAX_READ) {
+            log_Object.data_T.remove(0);
+            log_Object.data_H.remove(0);
+            log_Object.time.remove(0);
 
-    // Print the Temp, Hum, and Time to the areas 
-    public void print_Log_Data() {
-        int i;
-        log_AreaT.clear();
-        log_AreaH.clear();
-        log_AreaTD.clear();
-        for (i = 0; i < counter_Log; i++) {
-            log_AreaTD.appendText(time.get(i) + "\n");
-            log_AreaT.appendText(data_T.get(i) + "\n");
-            log_AreaH.appendText(data_H.get(i) + "\n");
+            counter_Log--;
         }
     }
 
@@ -236,45 +190,34 @@ public class GUI extends Application {
                 try {
                     /*the first line is the temp reading */
                     str = dis.readLine();
+                   
                     /*assign value into the integer temper */
                     temper = new Integer(str);
+                    
                     /*the scound line is the humidty reading*/
                     str = dis.readLine();
+                    
+                    
                     /*assign value into the integer humid*/
                     humid = new Integer(str);
+                    
                     /*set the value of the Gauge*/
                     tempG.setValue(temper);
                     humidG.setValue(humid);
-                    /*assign the values into the vector */
-                    counter_Read++;
-                    if (counter_Read == 1) {
-                        data_T.add(temper);
-                        data_H.add(humid);
-                        currentTime = LocalTime.now();
-                        time.add(currentTime.getHour() + ":" + currentTime.getMinute() + ":"
-                                + currentTime.getSecond());
-                        counter_Log++;
-                    } else if (counter_Read == 15) {
-                        counter_Read = 0;
-                    }
-                    if (counter_Log == 10) {
-                        data_T.remove(0);
-                        data_H.remove(0);
-                        time.remove(0);
-
-                        counter_Log--;
-                    }
+                    
+                    add_To_Log();
+                    
                 } catch (IOException ex) {
                     Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }).start();
     }
-
+    
+    
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
-        StackPane root = new StackPane();
-        StackPane root4 = new StackPane();
+        
 
         /* Set Scaling for The Buttons */
         test.setScaleX(1.25);
@@ -301,13 +244,7 @@ public class GUI extends Application {
         BorderPane Pane = new BorderPane();
 
         // Read an image to be used as a background for Applicarion Scene
-        Image image2 = new Image(new FileInputStream("2.jpg"));
-        ImageView imageView2 = new ImageView(image2);
-        root3 = new Group(imageView2);
-
-        imageView2.setFitHeight(600);
-        imageView2.setFitWidth(600);
-
+        
         Image image = new Image(new FileInputStream("1.jpg"));
         ImageView imageView = new ImageView(image);
         root2 = new Group(imageView);
@@ -339,17 +276,56 @@ public class GUI extends Application {
         // The handling of Log key: Change the Scene from Applocation to Log
         // And add the data to the areas
         log.setOnAction(e -> {
-            primaryStage.setScene(log_Scene);
+            primaryStage.setScene(log_Object.log_Scene);
             primaryStage.centerOnScreen();
-            print_Log_Data();
+            log_Object.set_Log_Counter(counter_Log);
+            log_Object.print_Log_Data();
         });
         // The handling of Log key: Change the Scene from Log to Applocation
-        log_Ok.setOnAction(e -> {
+        log_Object.log_Ok.setOnAction(e -> {
             primaryStage.setScene(app_Scene);
             primaryStage.centerOnScreen();
         });
         /* Handeling the stage close key on top right */
+        
+        log_Object.log_Setting.setOnAction(e -> {
+            primaryStage.setScene(log_Setting.log_Setting_Scene);
+            primaryStage.centerOnScreen();
+            
+        });
+        
+        log_Setting.Done.setOnAction(e -> {
+            
+            log_Object.MAX_READ = Integer.parseInt(log_Setting.number.getText()); 
+            log_Object.TIME_BET_READ = Integer.parseInt(log_Setting.period.getText()); 
+            primaryStage.setScene(log_Object.log_Scene);
+            primaryStage.centerOnScreen();
+            
+        });
+        
+        // force the field to be numeric only
+        log_Setting.number.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, 
+                String newValue) {
+                if (!newValue.matches("\\d*")) {
+                    log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
+                }
+            }
 
+        });
+        
+        log_Setting.period.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, 
+                String newValue) {
+                if (!newValue.matches("\\d*")) {
+                    log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
+                }
+            }
+
+        });
+        
         primaryStage.setOnCloseRequest((WindowEvent event) -> {
             Platform.exit();
             primaryStage.close();
@@ -367,13 +343,22 @@ public class GUI extends Application {
         root.getChildren().add(root2);
         root.getChildren().add(Pane);
 
-        root4.getChildren().add(root3);
-        root4.getChildren().add(log_Pane);
-
+        root4.getChildren().add(log_Object.root3);
+        root4.getChildren().add(log_Object.log_Pane);
+        
+        root6.getChildren().add(log_Setting.root3);
+        root6.getChildren().add(log_Setting.log_VBox);
+        
+        
         app_Scene = new Scene(root, 1500, 600, Color.WHITE);
-        log_Scene = new Scene(root4, 600, 600, Color.WHITE);
+        log_Object.log_Scene = new Scene(root4, 600, 600, Color.WHITE);
         app_Scene.getStylesheets().add(getClass().getResource("CSS.css").toString());
-
+        log_Object.log_Scene.getStylesheets().add(getClass().getResource("CSS.css").toString());
+        
+        log_Setting.log_Setting_Scene = new Scene(root6, 600, 400, Color.WHITE);
+        log_Setting.log_Setting_Scene.getStylesheets().add(getClass().getResource("CSS.css").toString());
+        
+        
         primaryStage.initStyle(StageStyle.DECORATED);
         primaryStage.setTitle("FireAlarm");
         primaryStage.setScene(app_Scene);

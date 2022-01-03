@@ -24,7 +24,7 @@ public class CleintsHandler extends Thread {
 
     DataInputStream dis;
     PrintStream ps;
-    static Vector<CleintsHandler> clients = new Vector<CleintsHandler>();
+    static Vector<CleintsHandler> clients = new Vector<>();
 
     /*start the to way communication between the clients with the server and the server with the Arduino*/
     public CleintsHandler(Socket s) {
@@ -32,24 +32,28 @@ public class CleintsHandler extends Thread {
             dis = new DataInputStream(s.getInputStream());
             ps = new PrintStream(s.getOutputStream());
             clients.add(this);
+            
             /*send the com port to the user*/
             ps.println(Server.com);
-            this.start();
+            
+            start();
+            
             /*this thread is to send the reading to all clients*/
             new Thread(() -> {
                 while (true) {
                     try {
-                        Thread.sleep(1000);
-                    } catch (Exception e) {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
                     }
 
                     for (CleintsHandler ch : clients) {
-                        System.out.println("chathandeler" + Server.temper + " " + Server.humid);
+                        System.out.println("ClientHandeler" + Server.temper + " " + Server.humid);
                         ch.ps.println(Server.temper);
                         ch.ps.println(Server.humid);
                     }
                 }
             }).start();
+            
         } catch (IOException ex) {
             Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
             try {
@@ -76,7 +80,6 @@ public class CleintsHandler extends Thread {
                 }
 
                 Server.output.println(msg);
-
                 Server.output.flush();
             }
         };
@@ -90,6 +93,7 @@ public class CleintsHandler extends Thread {
             try {
                 /*recieve from the clients*/
                 String str = dis.readLine();
+                
                 /*send to the Arduino*/
                 send_com(str);
 
