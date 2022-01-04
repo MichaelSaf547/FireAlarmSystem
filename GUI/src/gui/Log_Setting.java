@@ -31,27 +31,26 @@ public class Log_Setting {
         
     Scene log_Setting_Scene;
 
-    Label log_Label_Setting_Number_read;        
-    Label log_Label_Setting_Period_read;     
+    Label log_Label_Setting_Number_read;    // The line for number input 
+    Label log_Label_Setting_Period_read;    // The line for period input
     Label log_Label_OK_1;
     Label log_Label_OK_2;
     Label log_Label_OK_3;
     Label log_Label_OK_4;
 
-    TextField number;
-    TextField period;
+    TextField number;                       // For the number of reads
+    TextField period;                       // For the period between reads
     Button Done;                            // To return to the Log Scene
-    HBox number_HBox;                        
-    HBox period_HBox;
-    HBox button_HBox;                           
+    HBox number_HBox;                       // Line and textfield of number of reads
+    HBox period_HBox;                       // Line and textfield of period between reads
+    HBox button_HBox;                       // For the button
     VBox log_VBox;                          
-    
     
     Group root3;                            // To handle the background image of LOG 
     
+    // Constructor to initate the paramenters of the log setting scene
     public Log_Setting() throws FileNotFoundException
     {
-        
         
         Font font = Font.font("Verdana", FontWeight.BOLD, 18);
         log_Label_Setting_Number_read = new Label("Enter the number of reads: ");
@@ -59,14 +58,23 @@ public class Log_Setting {
         log_Label_Setting_Period_read = new Label("Enter the time between each read(s): ");
         log_Label_Setting_Period_read.setFont(font);
         
+        //to adjust the first line 
         log_Label_OK_1 = new Label("\n\n\n");
+        
+        //to adjust the distance between the two lines 
         log_Label_OK_2 = new Label("\n\n\n");
+        
+        //to adjust the distance between the second line and the button
         log_Label_OK_3 = new Label("\n\n\n");
+        
+        // to adjust the distance between the button and the end
         log_Label_OK_4 = new Label("\n\n");
 
+        //Done button is used to return to the log scene
         Done = new Button("Done");
         Done.setDefaultButton(true);
         Done.setScaleX(1.25);
+        //set the id to connect it with the CSS file
         Done.setId("log_Set_Done");
         
         

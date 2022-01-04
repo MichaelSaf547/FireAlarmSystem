@@ -33,20 +33,28 @@ import javafx.scene.text.FontWeight;
 
 public class Log {
     
-    int MAX_READ = 10;
-    int TIME_BET_READ = 5;
-    int counter_Log = 0;
+    int MAX_READ = 10;                      // The maximum number of reads to be on the log 
+    int TIME_BET_READ = 5;                  // The period between eah read and the next in seconds 
+    
+    int counter_Log = 0;                    // the number of data in the data vectors to be shown 
+    
     Scene log_Scene;
 
+    Label log_Label_OK_1;                   // Space before the buttons
+    Label log_Label_OK_2;                   // Space after the buttons
     Label log_Label_DataT;                  // For Temperature data    
     Label log_Label_DataH;                  // For Humidity data
     Label log_Label_Time;                   // For Time data
+    
     Button log_Ok;                          // To return to the Application Scene
     Button log_Setting;                     // to adjust number of reads and the period between every read
+    
     HBox log_HBox;                          // To handle the labels 
     HBox log_Data_HBox;                     // To handle the Data Areas 
     HBox log_Buttons;                       // To handle two buttons
+    
     VBox log_VBox;                          // To handle the Log Scene
+    
     TextArea log_AreaT;                     // For Temperature data
     TextArea log_AreaH;                     // For Humidity data
     TextArea log_AreaTD;                    // For Time data
@@ -69,12 +77,15 @@ public class Log {
         
         //The whole comming are for the log
         Font font = Font.font("Verdana", FontWeight.BOLD, 18);
-        Label log_Label_OK_1 = new Label("");
-        Label log_Label_OK_2 = new Label("");
+        log_Label_OK_1 = new Label("");
+        log_Label_OK_2 = new Label("");
+        
         log_Label_DataT = new Label("Temperature");
         log_Label_DataT.setFont(font);
+        
         log_Label_DataH = new Label("Humidity");
         log_Label_DataH.setFont(font);
+        
         log_Label_Time = new Label("Time");
         log_Label_Time.setFont(font);
         
@@ -142,6 +153,7 @@ public class Log {
 
     }
     
+    //Set the counter_log to know how many reads we have
     public void set_Log_Counter(int log_Counter)
     {
         counter_Log = log_Counter;

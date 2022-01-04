@@ -57,9 +57,9 @@ public class GUI extends Application {
     HBox hGauge;                // For Humidity Gauge 
     HBox bButtons;              // For the four buttons in the Application Scene
 
-    StackPane root;
-    StackPane root4;
-    StackPane root6;
+    StackPane root;             // for the background image in the application scene
+    StackPane root4;            // for the background image in the log scene
+    StackPane root6;            // for the background image in the log setting scene
 
     //The four buttons in the Applicatioin Scene
     Button test;                // To test the whole System     
@@ -74,23 +74,25 @@ public class GUI extends Application {
     static SerialPort chosenPort;
 
     int alertFlag = 0;                      // Used as a flag to check if the temperature is higher than 26 C
+    
+    Log log_Object;                         // Object from the log class
+    Log_Setting log_Setting;                // Object from the log_Setting class
 
-    // The Whole comming is for the Log Scene
-    Log log_Object;
-    Log_Setting log_Setting;
-    //Comm comm;                            // Comm object to start connection
-    Socket s;
-    DataInputStream dis;
-    PrintStream ps;
+    // Communication with the Server
+    Socket s;                               // Client Socket
+    DataInputStream dis;                    // Client Data Input Stream
+    PrintStream ps;                         // Client Print Stream
+    
     Integer temper = 0;
     Integer humid = 0;
 
-    private int counter_Read = 0; // every 15 input will log one data
-    private int counter_Log = 0; // to check how many data has benn logged
+    private int counter_Read = 0;           // every 15 input will log one data
+    private int counter_Log = 0;            // to check how many data has benn logged
 
     private LocalTime currentTime;
-    int counter_to_exit;
-
+    int counter_to_exit;                    // used to count the number of trying to connect with the server
+    
+    // To get the Arduino Port
     public void get_com_port() {
         /*get the name of the port that the aruino is connect to*/
         com = "";
@@ -102,6 +104,9 @@ public class GUI extends Application {
         label.setText(" Ardunio Nano(" + com + ")");
     }
 
+    /* Trying to connect to the the Server
+        After Connection, initiating the Client Gui variables
+    */
     @Override
     public void init() throws FileNotFoundException {
 
@@ -127,28 +132,24 @@ public class GUI extends Application {
         root = new StackPane();
         root4 = new StackPane();
         root6 = new StackPane();
-        /* String com = "";
-        try {
-            com = dis.readLine();
-        } catch (IOException ex) {
-            System.out.println("Error reading Port name");
-        }
-       
-
-        label = new Label(" Ardunio Nano(" + com + ")");*/
-
- /*get the name com port*/
+        
+        //Get the name of com port
         get_com_port();
-
-        tempG = new Gauge();              // Gauge for Temperature
-        humidG = new Gauge();
+        
+        // The Gauges for the Application Scene
+        tempG = new Gauge();                // Gauge for Temperature
+        humidG = new Gauge();               // Gauge for Humidity
+        
         vbox = new VBox();
         hGauge = new HBox();
         bButtons = new HBox();
+        
+        // The 5 buttions of the Application Scene
         test = new Button("Test");
         stop = new Button("Stop");
         log = new Button("Log");
         start = new Button("Start");
+        
         exit = new Button("Exit");
         exit.setCancelButton(true);
 
@@ -162,17 +163,23 @@ public class GUI extends Application {
         label.setFont(Font.font(26));                                   // Make the label font 26 
         vbox.getChildren().add(bButtons);                               // Add buttons to Vbox
         vbox.getChildren().add(label);                                  // Add label to Vbox
+        
+        //Set the IDs for the 5 buttons for the CSS file  
         test.setId("test");                                             // Setid for the CSS file
         stop.setId("stop");                                             // Setid for the CSS file
         log.setId("log");                                               // Setid for the CSS file
         start.setId("start");                                           // Setid for the CSS file
         exit.setId("exit");
 
-        //The whole comming are for the log
         log_Object = new Log();
         log_Setting = new Log_Setting();
     }
-
+    
+    /* Add the data To the vectors of data
+    after a specified period in second 
+    the period is mutliplied by 2 because we read each 0.5 second 
+    and we have a specified maximum of saved reads
+    */
     public void add_To_Log() {
         /*assign the values into the vector */
         counter_Read++;
@@ -195,7 +202,9 @@ public class GUI extends Application {
             counter_Log--;
         }
     }
-
+    /* 
+    Receive from the server and checks if it is open or not
+    */
     public void recieveFromServer() {
         /*Creating thread to receive the temperature and humidty readings form the server*/
         new Thread(() -> {
@@ -336,35 +345,41 @@ public class GUI extends Application {
         });
 
         log_Setting.Done.setOnAction(e -> {
-
-            log_Object.MAX_READ = Integer.parseInt(log_Setting.number.getText());
-            log_Object.TIME_BET_READ = Integer.parseInt(log_Setting.period.getText());
+            
+            if("".equals(log_Setting.number.getText()))
+            {
+                //Do Nothing
+            }
+            else 
+            {
+                log_Object.MAX_READ = Integer.parseInt(log_Setting.number.getText());
+            }
+            
+            if("".equals(log_Setting.number.getText()))
+            {
+                //Do Nothing
+            }
+            else 
+            {
+                log_Object.TIME_BET_READ = Integer.parseInt(log_Setting.period.getText());
+            }
+            
             primaryStage.setScene(log_Object.log_Scene);
             primaryStage.centerOnScreen();
 
         });
 
         // force the field to be numeric only
-        log_Setting.number.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue,
-                    String newValue) {
-                if (!newValue.matches("\\d*")) {
-                    log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
-                }
+        log_Setting.number.textProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
             }
-
         });
 
-        log_Setting.period.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue,
-                    String newValue) {
-                if (!newValue.matches("\\d*")) {
-                    log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
-                }
+        log_Setting.period.textProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                log_Setting.number.setText(newValue.replaceAll("[^\\d]", ""));
             }
-
         });
 
         primaryStage.setOnCloseRequest((WindowEvent event) -> {
@@ -375,6 +390,7 @@ public class GUI extends Application {
 
         /*call the recieve method that recieve the readings form the server*/
         recieveFromServer();
+        
         /*call the alert Method after recieving the reading from the server */
         alertMethod();
 
