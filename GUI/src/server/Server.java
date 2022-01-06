@@ -44,26 +44,6 @@ public class Server {
     static String comPort = "";
     static int counter_to_exit;
 
-    
-    /*start the server*/
-    public Server() {
-        try {
-            /*Creat the server socket->5005 */
-            server = new ServerSocket(5005);
-            while (true) {
-                /*waiting for clients to join the server*/
-                s = server.accept();
-                /*add new client to the class CleintsHandler*/
-                new CleintsHandler(s);
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(Server.class
-                    .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    
-    
 
     /*Start communication between Ardunio and the server using SerialPort*/
     static public String init_com() {
@@ -114,7 +94,7 @@ public class Server {
                             String input1 = input.nextLine();
 
                             String pattern = "-?\\d+";
-                            if (input1.matches(pattern)) { // any positive or negetive integer or not!
+                            if (input1.matches("-?\\d+")) { // any positive or negetive integer or not!
                                 temp_temper = Integer.parseInt(input1);
                             }
 
@@ -149,7 +129,7 @@ public class Server {
 
                 if (temp_temper > temp_humid) {
                     temp_humd_flag = 1;
-                    System.out.println("-------temp_humd_flag = 1----------" + temp_temper + " " + temp_humid);
+                    System.out.println("-------the reading is flipped----------" + temp_temper + " " + temp_humid);
                 }
 
                 while (input.hasNextLine()) {
@@ -157,38 +137,52 @@ public class Server {
                         Thread.sleep(100);
                     } catch (Exception e) {
                     }
-                    try {
-                        if (open_Port == true) {
-                            if (temp_humd_flag == 1) {
-                                humid = Integer.parseInt(input.nextLine());
-                                temper = Integer.parseInt(input.nextLine());
-                            } else {
-                                temper = Integer.parseInt(input.nextLine());
-                                humid = Integer.parseInt(input.nextLine());
-                            }
-                            System.out.println(temper + " " + humid + " " + chosenPort.openPort());
-                        } else {
-                            System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
-                            for (counter_to_exit = 1; counter_to_exit < 6; counter_to_exit++) {
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException ex) {
-                                    Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                                System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
-                            }
-                            Platform.exit();
-                            System.exit(0);
-                        }
-                        open_Port = chosenPort.openPort();
-                    } catch (Exception e) {
+
+                    if (temp_humd_flag == 1) {
+                        humid = Integer.parseInt(input.nextLine());
+                        temper = Integer.parseInt(input.nextLine());
+                    } else {
+                        temper = Integer.parseInt(input.nextLine());
+                        humid = Integer.parseInt(input.nextLine());
                     }
+                    System.out.println("temp= " + temper + " humid= " + humid + " " + open_Port);
 
                 }
+                open_Port = chosenPort.openPort();
+                if (open_Port == false) {
+                    System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                    for (counter_to_exit = 1; counter_to_exit < 6; counter_to_exit++) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                    }
+                    Platform.exit();
+                    System.exit(0);
+                }
+
             }
         };
         thread.start();
     }
 
-    
+    /*start the server*/
+    public Server() {
+        try {
+            /*Creat the server socket->5005 */
+            server = new ServerSocket(5005);
+            while (true) {
+                /*waiting for clients to join the server*/
+                s = server.accept();
+                /*add new client to the class CleintsHandler*/
+                new CleintsHandler(s);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Server.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
 }

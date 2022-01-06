@@ -49,8 +49,11 @@ public class CleintsHandler extends Thread {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
                     }
+                    int counter;
+                    counter=0;
                     for (CleintsHandler ch : clients) {
-                        System.out.println("ClientHandeler" + Server.temper + " " + Server.humid);
+                        System.out.println("Send readings to client ("+counter+ ") " +"temp= "+ Server.temper + " humid= " + Server.humid);
+                        counter++;
                         if (Server.chosenPort.openPort()) {
                             ch.ps.println(Server.temper);
                             ch.ps.println(Server.humid);
