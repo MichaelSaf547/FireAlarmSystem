@@ -13,9 +13,15 @@
 
 package gui;
 
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -29,6 +35,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 
 
 public class Log {
@@ -48,10 +56,11 @@ public class Log {
     
     Button log_Ok;                          // To return to the Application Scene
     Button log_Setting;                     // to adjust number of reads and the period between every read
+    Button log_Save;                        // to save as Temperature and Humidity
     
     HBox log_HBox;                          // To handle the labels 
     HBox log_Data_HBox;                     // To handle the Data Areas 
-    HBox log_Buttons;                       // To handle two buttons
+    HBox log_Buttons;                       // To handle three buttons
     
     VBox log_VBox;                          // To handle the Log Scene
     
@@ -66,6 +75,7 @@ public class Log {
     public Vector<Integer> data_H;
     public Vector<Integer> data_T;
     public Vector<String> time;
+    private Window primaryStage;
     
     public Log() throws FileNotFoundException
     {
@@ -99,6 +109,11 @@ public class Log {
         log_Setting.setScaleX(1.25);
         log_Setting.setId("log_Sett");
         
+        log_Save = new Button("Save");
+        log_Save.setDefaultButton(true);
+        log_Save.setScaleX(1.25);
+        log_Save.setId("log_Save");
+        
         
         log_HBox = new HBox(log_Label_Time, log_Label_DataT, log_Label_DataH); // add labels
         log_HBox.setAlignment(Pos.CENTER);
@@ -124,7 +139,7 @@ public class Log {
         log_AreaTD.setEditable(false);
         
         log_Buttons = new HBox();
-        log_Buttons.getChildren().addAll(log_Ok, log_Setting);
+        log_Buttons.getChildren().addAll(log_Ok,log_Save,log_Setting);
         log_Buttons.setAlignment(Pos.CENTER);
         log_Buttons.setSpacing(100);
         
@@ -142,6 +157,19 @@ public class Log {
         log_Pane.setTop(log_HBox);
         log_Pane.setCenter(log_Data_HBox);
         log_Pane.setBottom(log_Ok_Hbx);
+        
+        FileChooser fileChooser1 = new FileChooser();//Save Part
+        fileChooser1.setTitle("Save");
+        fileChooser1.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"));
+        log_Save.setOnAction((ActionEvent event) -> {
+          try {
+              try (FileWriter wr = new FileWriter(fileChooser1.showSaveDialog(primaryStage)); BufferedWriter buffer = new BufferedWriter(wr)) {
+                  buffer.write("Time\n\n"+log_AreaTD.getText() +"\n"+"Temperature \n\n"+ log_AreaT.getText() +"\n"+"Humidity\n\n"+ log_AreaH.getText());
+              }
+          } catch (IOException ex) {
+              Logger.getLogger(Log.class.getName()).log(Level.SEVERE, null, ex);
+          }
+    });
         
         // Read an image to be used as a background for Applicarion Scene
         Image image2 = new Image(new FileInputStream("2.jpg"));
