@@ -146,7 +146,20 @@ public class Server {
                         humid = Integer.parseInt(input.nextLine());
                     }
                     System.out.println("temp= " + temper + " humid= " + humid + " " + open_Port);
-
+                    open_Port = chosenPort.openPort();
+                    if (open_Port == false) {
+                        System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                        for (counter_to_exit = 1; counter_to_exit < 6; counter_to_exit++) {
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException ex) {
+                                Logger.getLogger(CleintsHandler.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            System.out.println("disconected from the Arduino for " + counter_to_exit + " sec");
+                        }
+                        Platform.exit();
+                        System.exit(0);
+                    }
                 }
                 open_Port = chosenPort.openPort();
                 if (open_Port == false) {
